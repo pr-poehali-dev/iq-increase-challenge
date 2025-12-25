@@ -4,7 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
+import MathGame from '@/components/games/MathGame';
+import MemoryGame from '@/components/games/MemoryGame';
+import PatternGame from '@/components/games/PatternGame';
+import LogicGame from '@/components/games/LogicGame';
+import CreativityGame from '@/components/games/CreativityGame';
+import AttentionGame from '@/components/games/AttentionGame';
 
 interface Task {
   id: number;
@@ -14,6 +21,7 @@ interface Task {
   category: string;
   icon: string;
   completed: boolean;
+  gameType: 'math' | 'memory' | 'pattern' | 'logic' | 'creativity' | 'attention';
 }
 
 interface Artifact {
@@ -48,14 +56,18 @@ function Index() {
   const [iq, setIq] = useState(3000);
   const [level, setLevel] = useState(1);
   const [activeTab, setActiveTab] = useState('home');
+  const [activeGame, setActiveGame] = useState<Task | null>(null);
+  const [completedTasks, setCompletedTasks] = useState<number[]>([]);
+  const [tasksCompleted, setTasksCompleted] = useState(0);
+  const { toast } = useToast();
 
   const tasks: Task[] = [
-    { id: 1, title: 'Логическая задача', description: 'Решите математическую головоломку', reward: 150, category: 'Математика', icon: '🧮', completed: false },
-    { id: 2, title: 'Быстрый счёт', description: 'Выполните вычисления за 60 секунд', reward: 200, category: 'Скорость', icon: '⚡', completed: false },
-    { id: 3, title: 'Память', description: 'Запомните последовательность из 8 символов', reward: 180, category: 'Память', icon: '🧠', completed: false },
-    { id: 4, title: 'Паттерны', description: 'Найдите закономерность в ряду чисел', reward: 170, category: 'Логика', icon: '🔍', completed: false },
-    { id: 5, title: 'Креативность', description: 'Придумайте 5 необычных применений для предмета', reward: 220, category: 'Творчество', icon: '💡', completed: false },
-    { id: 6, title: 'Внимание', description: 'Найдите все отличия на картинке', reward: 160, category: 'Внимание', icon: '👁️', completed: false },
+    { id: 1, title: 'Логическая задача', description: 'Решите математическую головоломку', reward: 150, category: 'Математика', icon: '🧮', completed: false, gameType: 'logic' },
+    { id: 2, title: 'Быстрый счёт', description: 'Выполните вычисления за 60 секунд', reward: 200, category: 'Скорость', icon: '⚡', completed: false, gameType: 'math' },
+    { id: 3, title: 'Память', description: 'Запомните последовательность из 8 символов', reward: 180, category: 'Память', icon: '🧠', completed: false, gameType: 'memory' },
+    { id: 4, title: 'Паттерны', description: 'Найдите закономерность в ряду чисел', reward: 170, category: 'Логика', icon: '🔍', completed: false, gameType: 'pattern' },
+    { id: 5, title: 'Креативность', description: 'Придумайте 5 необычных применений для предмета', reward: 220, category: 'Творчество', icon: '💡', completed: false, gameType: 'creativity' },
+    { id: 6, title: 'Внимание', description: 'Найдите все отличия на картинке', reward: 160, category: 'Внимание', icon: '👁️', completed: false, gameType: 'attention' },
   ];
 
   const artifacts: Artifact[] = [
@@ -91,12 +103,59 @@ function Index() {
     legendary: 'bg-orange-500',
   };
 
-  const completeTask = (taskId: number, reward: number) => {
-    setIq(prev => prev + reward);
-    const newLevel = Math.floor(iq / 1000) + 1;
-    if (newLevel > level) {
-      setLevel(newLevel);
+  const startTask = (task: Task) => {
+    if (completedTasks.includes(task.id)) {
+      toast({
+        title: '⚠️ Задание выполнено',
+        description: 'Вы уже выполнили это задание!',
+      });
+      return;
     }
+    setActiveGame(task);
+  };
+
+  const handleGameComplete = (success: boolean) => {
+    if (!activeGame) return;
+
+    if (success) {
+      const ownedArtifacts = artifacts.filter(a => a.owned);
+      const totalBonus = ownedArtifacts.reduce((sum, a) => sum + a.bonus, 0);
+      const bonusMultiplier = 1 + (totalBonus / 100);
+      const finalReward = Math.round(activeGame.reward * bonusMultiplier);
+
+      setIq(prev => {
+        const newIq = prev + finalReward;
+        const newLevel = Math.floor(newIq / 1000) + 1;
+        if (newLevel > level) {
+          setLevel(newLevel);
+          toast({
+            title: '🎉 Новый уровень!',
+            description: `Вы достигли ${newLevel} уровня!`,
+          });
+        }
+        return newIq;
+      });
+
+      setCompletedTasks(prev => [...prev, activeGame.id]);
+      setTasksCompleted(prev => prev + 1);
+
+      toast({
+        title: '✅ Задание выполнено!',
+        description: `+${finalReward} IQ (бонус от артефактов: +${Math.round((bonusMultiplier - 1) * 100)}%)`,
+      });
+    } else {
+      toast({
+        title: '❌ Не получилось',
+        description: 'Попробуйте ещё раз!',
+        variant: 'destructive',
+      });
+    }
+
+    setActiveGame(null);
+  };
+
+  const handleGameCancel = () => {
+    setActiveGame(null);
   };
 
   return (
@@ -217,10 +276,20 @@ function Index() {
                   <p className="text-sm text-muted-foreground mb-4">{task.description}</p>
                   <Button 
                     className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
-                    onClick={() => completeTask(task.id, task.reward)}
+                    onClick={() => startTask(task)}
+                    disabled={completedTasks.includes(task.id)}
                   >
-                    <Icon name="Play" size={16} className="mr-2" />
-                    Начать
+                    {completedTasks.includes(task.id) ? (
+                      <>
+                        <Icon name="Check" size={16} className="mr-2" />
+                        Выполнено
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="Play" size={16} className="mr-2" />
+                        Начать
+                      </>
+                    )}
                   </Button>
                 </Card>
               ))}
@@ -353,6 +422,25 @@ function Index() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {activeGame && activeGame.gameType === 'math' && (
+        <MathGame onComplete={handleGameComplete} onCancel={handleGameCancel} />
+      )}
+      {activeGame && activeGame.gameType === 'memory' && (
+        <MemoryGame onComplete={handleGameComplete} onCancel={handleGameCancel} />
+      )}
+      {activeGame && activeGame.gameType === 'pattern' && (
+        <PatternGame onComplete={handleGameComplete} onCancel={handleGameCancel} />
+      )}
+      {activeGame && activeGame.gameType === 'logic' && (
+        <LogicGame onComplete={handleGameComplete} onCancel={handleGameCancel} />
+      )}
+      {activeGame && activeGame.gameType === 'creativity' && (
+        <CreativityGame onComplete={handleGameComplete} onCancel={handleGameCancel} />
+      )}
+      {activeGame && activeGame.gameType === 'attention' && (
+        <AttentionGame onComplete={handleGameComplete} onCancel={handleGameCancel} />
+      )}
     </div>
   );
 }
