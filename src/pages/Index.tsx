@@ -111,14 +111,14 @@ function Index() {
     return () => clearInterval(interval);
   }, [toast]);
 
-  const artifacts: Artifact[] = [
+  const [artifacts, setArtifacts] = useState<Artifact[]>([
     { id: 1, name: 'Книга мудрости', emoji: '📚', effect: '+10% к награде за задания', bonus: 10, rarity: 'common', owned: true },
     { id: 2, name: 'Магический кристалл', emoji: '💎', effect: '+15% IQ от всех источников', bonus: 15, rarity: 'rare', owned: true },
     { id: 3, name: 'Корона гения', emoji: '👑', effect: '+25% к сложным задачам', bonus: 25, rarity: 'epic', owned: false, price: 5000 },
     { id: 4, name: 'Астральный шар', emoji: '🔮', effect: 'Удваивает награду 1 раз в день', bonus: 100, rarity: 'legendary', owned: false, price: 10000 },
     { id: 5, name: 'Песочные часы', emoji: '⏳', effect: '+20% к скоростным заданиям', bonus: 20, rarity: 'rare', owned: false, price: 3000 },
     { id: 6, name: 'Амулет памяти', emoji: '🧿', effect: '+30% к заданиям на память', bonus: 30, rarity: 'epic', owned: false, price: 6000 },
-  ];
+  ]);
 
   const updateAchievements = (newIq: number, newTasksCompleted: number) => {
     setAchievements(prev => {
@@ -248,6 +248,50 @@ function Index() {
 
   const handleGameCancel = () => {
     setActiveGame(null);
+  };
+
+  const buyArtifact = (artifactId: number) => {
+    const artifact = artifacts.find(a => a.id === artifactId);
+    if (!artifact || artifact.owned || !artifact.price) return;
+
+    if (iq < artifact.price) {
+      toast({
+        title: '❌ Недостаточно IQ',
+        description: `Нужно ${artifact.price.toLocaleString()} IQ, у вас ${iq.toLocaleString()}`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIq(prev => prev - artifact.price!);
+    setArtifacts(prev => prev.map(a => 
+      a.id === artifactId ? { ...a, owned: true } : a
+    ));
+
+    // Обновляем достижение "Коллекционер"
+    const ownedCount = artifacts.filter(a => a.owned).length + 1;
+    setAchievements(prev => {
+      const updated = prev.map(ach => {
+        if (ach.id === 3) {
+          const newProgress = ownedCount;
+          const newUnlocked = newProgress >= 3;
+          if (newUnlocked && !ach.unlocked) {
+            toast({
+              title: '🏆 Достижение разблокировано!',
+              description: ach.title,
+            });
+          }
+          return { ...ach, progress: newProgress, unlocked: newUnlocked };
+        }
+        return ach;
+      });
+      return updated;
+    });
+
+    toast({
+      title: '✨ Артефакт куплен!',
+      description: `${artifact.emoji} ${artifact.name} теперь в вашей коллекции`,
+    });
   };
 
   return (
@@ -438,6 +482,7 @@ function Index() {
                       className="w-full"
                       variant={iq >= (artifact.price || 0) ? "default" : "secondary"}
                       disabled={iq < (artifact.price || 0)}
+                      onClick={() => buyArtifact(artifact.id)}
                     >
                       <Icon name="ShoppingCart" size={16} className="mr-2" />
                       {artifact.price} IQ
