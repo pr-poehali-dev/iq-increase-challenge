@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -75,14 +75,41 @@ function Index() {
   ]);
   const { toast } = useToast();
 
-  const tasks: Task[] = [
+  const allPossibleTasks: Task[] = [
     { id: 1, title: 'Логическая задача', description: 'Решите математическую головоломку', reward: 150, category: 'Математика', icon: '🧮', completed: false, gameType: 'logic' },
     { id: 2, title: 'Быстрый счёт', description: 'Выполните вычисления за 60 секунд', reward: 200, category: 'Скорость', icon: '⚡', completed: false, gameType: 'math' },
     { id: 3, title: 'Память', description: 'Запомните последовательность из 8 символов', reward: 180, category: 'Память', icon: '🧠', completed: false, gameType: 'memory' },
     { id: 4, title: 'Паттерны', description: 'Найдите закономерность в ряду чисел', reward: 170, category: 'Логика', icon: '🔍', completed: false, gameType: 'pattern' },
     { id: 5, title: 'Креативность', description: 'Придумайте 5 необычных применений для предмета', reward: 220, category: 'Творчество', icon: '💡', completed: false, gameType: 'creativity' },
     { id: 6, title: 'Внимание', description: 'Найдите все отличия на картинке', reward: 160, category: 'Внимание', icon: '👁️', completed: false, gameType: 'attention' },
+    { id: 7, title: 'Словарный запас', description: 'Составьте слова из букв', reward: 190, category: 'Языки', icon: '📝', completed: false, gameType: 'logic' },
+    { id: 8, title: 'Реакция', description: 'Проверьте скорость реакции', reward: 210, category: 'Скорость', icon: '🎯', completed: false, gameType: 'attention' },
+    { id: 9, title: 'Стратегия', description: 'Найдите оптимальное решение', reward: 240, category: 'Логика', icon: '♟️', completed: false, gameType: 'logic' },
+    { id: 10, title: 'Визуализация', description: 'Представьте фигуру в 3D', reward: 230, category: 'Пространство', icon: '🎲', completed: false, gameType: 'pattern' },
+    { id: 11, title: 'Ассоциации', description: 'Найдите связь между понятиями', reward: 175, category: 'Творчество', icon: '🔗', completed: false, gameType: 'creativity' },
+    { id: 12, title: 'Концентрация', description: 'Удерживайте внимание 2 минуты', reward: 185, category: 'Внимание', icon: '🎪', completed: false, gameType: 'attention' },
   ];
+
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    // Начальный выбор случайных 6 заданий
+    const shuffled = [...allPossibleTasks].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 6);
+  });
+
+  // Обновление заданий каждые 30 секунд
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const shuffled = [...allPossibleTasks].sort(() => Math.random() - 0.5);
+      setTasks(shuffled.slice(0, 6));
+      setCompletedTasks([]);
+      toast({
+        title: '🔄 Новые задания!',
+        description: 'Список заданий обновлён',
+      });
+    }, 30000); // 30 секунд
+
+    return () => clearInterval(interval);
+  }, [toast]);
 
   const artifacts: Artifact[] = [
     { id: 1, name: 'Книга мудрости', emoji: '📚', effect: '+10% к награде за задания', bonus: 10, rarity: 'common', owned: true },
