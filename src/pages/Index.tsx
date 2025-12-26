@@ -59,6 +59,20 @@ function Index() {
   const [activeGame, setActiveGame] = useState<Task | null>(null);
   const [completedTasks, setCompletedTasks] = useState<number[]>([]);
   const [tasksCompleted, setTasksCompleted] = useState(0);
+  const [achievements, setAchievements] = useState<Achievement[]>([
+    { id: 1, title: 'Первые шаги', description: 'Выполните первое задание', icon: '🎯', unlocked: false, progress: 0, maxProgress: 1 },
+    { id: 2, title: 'Любитель знаний', description: 'Накопите 5000 IQ', icon: '📖', unlocked: false, progress: 0, maxProgress: 5000 },
+    { id: 3, title: 'Коллекционер', description: 'Соберите 3 артефакта', icon: '🏆', unlocked: false, progress: 2, maxProgress: 3 },
+    { id: 4, title: 'Марафонец', description: 'Выполните 10 заданий подряд', icon: '🏃', unlocked: false, progress: 0, maxProgress: 10 },
+    { id: 5, title: 'Мастер разума', description: 'Достигните 10000 IQ', icon: '🧠', unlocked: false, progress: 0, maxProgress: 10000 },
+  ]);
+  const [leaderboard, setLeaderboard] = useState<Player[]>([
+    { username: 'GeniusMaster', iq: 15420, rank: 1, avatar: '🥇' },
+    { username: 'BrainStorm', iq: 13890, rank: 2, avatar: '🥈' },
+    { username: 'SmartCookie', iq: 12350, rank: 3, avatar: '🥉' },
+    { username: 'LogicKing', iq: 10200, rank: 4, avatar: '🎯' },
+    { username: 'ThinkFast', iq: 9800, rank: 5, avatar: '⚡' },
+  ]);
   const { toast } = useToast();
 
   const tasks: Task[] = [
@@ -79,22 +93,53 @@ function Index() {
     { id: 6, name: 'Амулет памяти', emoji: '🧿', effect: '+30% к заданиям на память', bonus: 30, rarity: 'epic', owned: false, price: 6000 },
   ];
 
-  const achievements: Achievement[] = [
-    { id: 1, title: 'Первые шаги', description: 'Выполните первое задание', icon: '🎯', unlocked: false, progress: 0, maxProgress: 1 },
-    { id: 2, title: 'Любитель знаний', description: 'Накопите 5000 IQ', icon: '📖', unlocked: false, progress: 3000, maxProgress: 5000 },
-    { id: 3, title: 'Коллекционер', description: 'Соберите 3 артефакта', icon: '🏆', unlocked: false, progress: 2, maxProgress: 3 },
-    { id: 4, title: 'Марафонец', description: 'Выполните 10 заданий подряд', icon: '🏃', unlocked: false, progress: 0, maxProgress: 10 },
-    { id: 5, title: 'Мастер разума', description: 'Достигните 10000 IQ', icon: '🧠', unlocked: false, progress: 3000, maxProgress: 10000 },
-  ];
+  const updateAchievements = (newIq: number, newTasksCompleted: number) => {
+    setAchievements(prev => {
+      const updated = prev.map(achievement => {
+        let newProgress = achievement.progress;
+        let newUnlocked = achievement.unlocked;
 
-  const leaderboard: Player[] = [
-    { username: 'GeniusMaster', iq: 15420, rank: 1, avatar: '🥇' },
-    { username: 'BrainStorm', iq: 13890, rank: 2, avatar: '🥈' },
-    { username: 'SmartCookie', iq: 12350, rank: 3, avatar: '🥉' },
-    { username: 'LogicKing', iq: 10200, rank: 4, avatar: '🎯' },
-    { username: 'ThinkFast', iq: 9800, rank: 5, avatar: '⚡' },
-    { username: 'Вы', iq: 3000, rank: 127, avatar: '🚀' },
-  ];
+        if (achievement.id === 1 && newTasksCompleted >= 1 && !achievement.unlocked) {
+          newProgress = newTasksCompleted;
+          newUnlocked = true;
+          toast({
+            title: '🏆 Достижение разблокировано!',
+            description: achievement.title,
+          });
+        } else if (achievement.id === 2) {
+          newProgress = newIq;
+          if (newIq >= 5000 && !achievement.unlocked) {
+            newUnlocked = true;
+            toast({
+              title: '🏆 Достижение разблокировано!',
+              description: achievement.title,
+            });
+          }
+        } else if (achievement.id === 4) {
+          newProgress = newTasksCompleted;
+          if (newTasksCompleted >= 10 && !achievement.unlocked) {
+            newUnlocked = true;
+            toast({
+              title: '🏆 Достижение разблокировано!',
+              description: achievement.title,
+            });
+          }
+        } else if (achievement.id === 5) {
+          newProgress = newIq;
+          if (newIq >= 10000 && !achievement.unlocked) {
+            newUnlocked = true;
+            toast({
+              title: '🏆 Достижение разблокировано!',
+              description: achievement.title,
+            });
+          }
+        }
+
+        return { ...achievement, progress: newProgress, unlocked: newUnlocked };
+      });
+      return updated;
+    });
+  };
 
   const rarityColors = {
     common: 'bg-gray-500',
@@ -123,6 +168,10 @@ function Index() {
       const bonusMultiplier = 1 + (totalBonus / 100);
       const finalReward = Math.round(activeGame.reward * bonusMultiplier);
 
+      setCompletedTasks(prev => [...prev, activeGame.id]);
+      const newTasksCompleted = tasksCompleted + 1;
+      setTasksCompleted(newTasksCompleted);
+
       setIq(prev => {
         const newIq = prev + finalReward;
         const newLevel = Math.floor(newIq / 1000) + 1;
@@ -133,11 +182,27 @@ function Index() {
             description: `Вы достигли ${newLevel} уровня!`,
           });
         }
+
+        updateAchievements(newIq, newTasksCompleted);
+        
+        // Обновляем рейтинг
+        setLeaderboard(prevLeaderboard => {
+          const updatedLeaderboard = prevLeaderboard.map(player => 
+            player.username === 'Вы' ? { ...player, iq: newIq } : player
+          );
+          
+          // Если игрока нет в списке, добавляем
+          if (!updatedLeaderboard.some(p => p.username === 'Вы')) {
+            updatedLeaderboard.push({ username: 'Вы', iq: newIq, rank: updatedLeaderboard.length + 1, avatar: '🚀' });
+          }
+          
+          // Сортируем и обновляем ранги
+          const sorted = updatedLeaderboard.sort((a, b) => b.iq - a.iq);
+          return sorted.map((player, index) => ({ ...player, rank: index + 1 }));
+        });
+
         return newIq;
       });
-
-      setCompletedTasks(prev => [...prev, activeGame.id]);
-      setTasksCompleted(prev => prev + 1);
 
       toast({
         title: '✅ Задание выполнено!',
