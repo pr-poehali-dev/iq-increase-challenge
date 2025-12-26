@@ -163,7 +163,7 @@ function Index() {
       <div className="max-w-7xl mx-auto">
         <header className="mb-8 text-center animate-fade-in">
           <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent mb-2">
-            IQ Challenge 🧠
+            КЛУБ ЭЙНШТЕЙНОВ 2.0
           </h1>
           <p className="text-muted-foreground text-lg">Развивай свой интеллект и собирай артефакты!</p>
         </header>
