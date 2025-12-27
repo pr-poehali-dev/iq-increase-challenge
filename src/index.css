@@ -6,26 +6,26 @@
 
 @layer base {
   :root {
-    --background: 250 60% 8%;
-    --foreground: 0 0% 100%;
+    --background: 210 60% 10%;
+    --foreground: 210 40% 98%;
 
-    --card: 250 50% 12%;
-    --card-foreground: 0 0% 100%;
+    --card: 210 50% 15%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 250 50% 12%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 210 50% 15%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 262 83% 58%;
+    --primary: 355 85% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 291 84% 61%;
+    --secondary: 140 65% 45%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 250 40% 20%;
-    --muted-foreground: 250 20% 70%;
+    --muted: 210 40% 25%;
+    --muted-foreground: 210 20% 70%;
 
-    --accent: 24 95% 53%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 45 100% 55%;
+    --accent-foreground: 210 60% 10%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
@@ -104,6 +104,34 @@
   body {
     @apply bg-background text-foreground;
     font-family: "Rubik", sans-serif;
+    background: linear-gradient(
+      135deg,
+      hsl(210 60% 10%) 0%,
+      hsl(210 50% 8%) 50%,
+      hsl(140 30% 10%) 100%
+    );
+    background-attachment: fixed;
+  }
+
+  @keyframes snowfall {
+    0% {
+      transform: translateY(-10px) translateX(0);
+    }
+    100% {
+      transform: translateY(100vh) translateX(100px);
+    }
+  }
+
+  @keyframes sparkle {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.5;
+      transform: scale(0.8);
+    }
   }
 
   h1,
